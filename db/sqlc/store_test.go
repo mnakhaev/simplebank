@@ -8,7 +8,7 @@ import (
 )
 
 func TestTransferTx(t *testing.T) {
-	store := NewStore(testDB)
+	store := NewSQLStore(testDB)
 
 	account1 := createRandomAccount(t)
 	account2 := createRandomAccount(t)
@@ -109,7 +109,7 @@ func TestTransferTx(t *testing.T) {
 
 // TestTransferTxDeadlock checks there's no deadlock when transferring money from acc1 -> acc2 and acc2 -> acc1 concurrently.
 func TestTransferTxDeadlock(t *testing.T) {
-	store := NewStore(testDB)
+	store := NewSQLStore(testDB)
 
 	account1 := createRandomAccount(t)
 	account2 := createRandomAccount(t)
