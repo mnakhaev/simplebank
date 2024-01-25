@@ -15,7 +15,7 @@ import (
 	"github.com/lib/pq"
 	mockdb "github.com/mnakhaev/simplebank/db/mock"
 	db "github.com/mnakhaev/simplebank/db/sqlc"
-	"github.com/mnakhaev/simplebank/db/util"
+	"github.com/mnakhaev/simplebank/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -165,7 +165,7 @@ func TestCreateUserAPI(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			// Marshal body data to JSON

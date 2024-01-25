@@ -13,13 +13,12 @@ import (
 	"github.com/golang/mock/gomock"
 	mockdb "github.com/mnakhaev/simplebank/db/mock"
 	db "github.com/mnakhaev/simplebank/db/sqlc"
-	"github.com/mnakhaev/simplebank/db/util"
+	"github.com/mnakhaev/simplebank/util"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetAccountAPI(t *testing.T) {
 	account := randomAccount()
-
 	testCases := []struct {
 		name          string
 		accountID     int64
@@ -79,7 +78,7 @@ func TestGetAccountAPI(t *testing.T) {
 			tc.buildStubs(store)
 
 			// start test server and send request
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/accounts/%d", tc.accountID)

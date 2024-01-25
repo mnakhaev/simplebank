@@ -5,28 +5,30 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
-	"github.com/mnakhaev/simplebank/db/util"
-
 	"github.com/mnakhaev/simplebank/api"
+	"github.com/mnakhaev/simplebank/config"
 	db "github.com/mnakhaev/simplebank/db/sqlc"
 )
 
 func main() {
 
-	config, err := util.LoadConfig(".")
+	cfg, err := config.LoadConfig(".")
 	if err != nil {
-		log.Fatal("cannot load config:", err)
+		log.Fatal("cannot load cfg:", err)
 	}
 
-	dbConn, err := sql.Open(config.DBDriver, config.DBSource)
+	dbConn, err := sql.Open(cfg.DBDriver, cfg.DBSource)
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
 	}
 
 	store := db.NewSQLStore(dbConn)
-	server := api.NewServer(store)
+	server, err := api.NewServer(cfg, store)
+	if err != nil {
+		log.Fatal("cannot create server:", err)
+	}
 
-	err = server.Start(config.ServerAddress)
+	err = server.Start(cfg.ServerAddress)
 	if err != nil {
 		log.Fatal("cannot start server:", err)
 	}
