@@ -47,11 +47,13 @@ func (s *Server) setupRouter() {
 	router.POST("/users", s.createUser)
 	router.POST("/users/login", s.loginUser)
 
-	router.POST("/accounts", s.createAccount)
-	router.GET("/accounts/:id", s.getAccount)
-	router.GET("/accounts/", s.listAccount)
+	authRoutes := router.Group("/").Use(authMiddleware(s.tokenMaker))
+	// all other routes (which need to be protected) should be added to authRoutes group
+	authRoutes.POST("/accounts", s.createAccount)
+	authRoutes.GET("/accounts/:id", s.getAccount)
+	authRoutes.GET("/accounts/", s.listAccount)
 
-	router.POST("/transfers", s.createTransfer)
+	authRoutes.POST("/transfers", s.createTransfer)
 
 	s.router = router
 }

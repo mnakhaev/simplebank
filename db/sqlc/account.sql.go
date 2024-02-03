@@ -112,20 +112,22 @@ const listAccounts = `-- name: ListAccounts :many
 
 SELECT id, owner, balance, currency, created_at
 FROM accounts
-ORDER BY id LIMIT $1
-OFFSET $2
+WHERE owner = $1
+ORDER BY id LIMIT $2
+OFFSET $3
 `
 
 type ListAccountsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Owner  string `json:"owner"`
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
 }
 
 // NO KEY UPDATE is used to prevent deadlocks. it tells that foreign key is not updated
 // otherwise, deadlock happens because accounts and entries tables are connected by foreign key
 // so, updating entries can block select from accounts
 func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error) {
-	rows, err := q.query(ctx, q.listAccountsStmt, listAccounts, arg.Limit, arg.Offset)
+	rows, err := q.query(ctx, q.listAccountsStmt, listAccounts, arg.Owner, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

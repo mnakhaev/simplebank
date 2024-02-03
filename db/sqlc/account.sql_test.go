@@ -47,12 +47,26 @@ func TestGetAccount(t *testing.T) {
 	require.WithinDuration(t, account.CreatedAt, res.CreatedAt, time.Second)
 }
 
-func TestListAccount(t *testing.T) {
-	_ = createRandomAccount(t)
+func TestListAccounts(t *testing.T) {
+	var lastAccount Account
+	for i := 0; i < 10; i++ {
+		lastAccount = createRandomAccount(t)
+	}
 
-	accounts, err := testQueries.ListAccounts(context.Background(), ListAccountsParams{Limit: 10})
+	arg := ListAccountsParams{
+		Owner:  lastAccount.Owner,
+		Limit:  5,
+		Offset: 0,
+	}
+
+	accounts, err := testQueries.ListAccounts(context.Background(), arg)
 	require.NoError(t, err)
-	require.NotZero(t, len(accounts))
+	require.NotEmpty(t, accounts)
+
+	for _, account := range accounts {
+		require.NotEmpty(t, account)
+		require.Equal(t, lastAccount.Owner, account.Owner)
+	}
 }
 
 func TestUpdateAccount(t *testing.T) {
