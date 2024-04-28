@@ -24,9 +24,12 @@ create table transfers
     created_at      timestamptz not null default now()
 );
 
-alter table entries add foreign key (account_id) references accounts(id);
-alter table transfers add foreign key (from_account_id) references accounts(id);
-alter table transfers add foreign key (to_account_id) references accounts(id);
+alter table entries
+    add foreign key (account_id) references accounts (id);
+alter table transfers
+    add foreign key (from_account_id) references accounts (id);
+alter table transfers
+    add foreign key (to_account_id) references accounts (id);
 
 create index on accounts (owner);
 create index on entries (account_id);

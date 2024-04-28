@@ -8,12 +8,13 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username,
-                   hashed_password,
-                   full_name,
-                   email)
-VALUES ($1, $2, $3, $4)
-RETURNING username, hashed_password, full_name, email, password_changed_at, created_at
+INSERT INTO users (
+   username,
+   hashed_password,
+   full_name,
+   email
+)
+VALUES ($1, $2, $3, $4) RETURNING username, hashed_password, full_name, email, password_changed_at, created_at
 `
 
 type CreateUserParams struct {
@@ -45,8 +46,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 const getUser = `-- name: GetUser :one
 SELECT username, hashed_password, full_name, email, password_changed_at, created_at
 FROM users
-WHERE username = $1
-LIMIT 1
+WHERE username = $1 LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {

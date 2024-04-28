@@ -14,14 +14,15 @@ type PasetoMaker struct {
 }
 
 // CreateToken creates new payload for PASETO token and encrypts it using symmetric key.
-func (p PasetoMaker) CreateToken(username string, duration time.Duration) (string, error) {
+func (p PasetoMaker) CreateToken(username string, duration time.Duration) (string, *Payload, error) {
 	payload, err := NewPayload(username, duration)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	// footer arg is optional
-	return p.paseto.Encrypt(p.symmetricKey, payload, nil)
+	token, err := p.paseto.Encrypt(p.symmetricKey, payload, nil)
+	return token, payload, err
 }
 
 // VerifyToken decrypts PASETO token using symmetric key and checks if it's valid.
