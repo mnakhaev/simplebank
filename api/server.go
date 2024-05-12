@@ -46,6 +46,7 @@ func (s *Server) setupRouter() {
 	router := gin.Default()
 	router.POST("/users", s.createUser)
 	router.POST("/users/login", s.loginUser)
+	router.POST("/tokens/renew_access", s.renewAccessToken)
 
 	authRoutes := router.Group("/").Use(authMiddleware(s.tokenMaker))
 	// all other routes (which need to be protected) should be added to authRoutes group
