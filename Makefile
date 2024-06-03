@@ -49,6 +49,12 @@ mock:
 
 proto:
 	rm -f pb/*.go
-	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative --go-grpc_out=pb --go-grpc_opt=paths=source_relative proto/*.proto
+	protoc --proto_path=proto \
+    --go_out=pb           --go_opt=paths=source_relative \
+	--go-grpc_out=pb      --go-grpc_opt=paths=source_relative \
+	--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \  # for gRPC gateway, see https://github.com/grpc-ecosystem/grpc-gateway?tab=readme-ov-file
+	proto/*.proto
+
+protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative --go-grpc_out=pb --go-grpc_opt=paths=source_relative --grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative proto/*.proto
 
 .PHONY: postgres createdb dropdb migrate-up migrate-down sqlc mock migrate-up-last migrate-down-last rundb db_docs db_schema  proto
