@@ -128,14 +128,18 @@ func (s *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
+	mtdt := s.extractMetadata(ctx)
+
 	session, err := s.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		UserAgent:    ctx.Request.UserAgent(),
-		ClientIp:     ctx.ClientIP(),
-		IsBlocked:    false,
-		ExpiresAt:    refreshPayload.ExpiredAt,
+		UserAgent:    mtdt.UserAgent,
+		ClientIp:     mtdt.ClientIP,
+		// UserAgent:    ctx.Request.UserAgent(),
+		// ClientIp:     ctx.ClientIP(),
+		IsBlocked: false,
+		ExpiresAt: refreshPayload.ExpiredAt,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
