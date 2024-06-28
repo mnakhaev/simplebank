@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 
+	_ "github.com/mnakhaev/simplebank/doc/statik" // needed to embed static files into the binary
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
 	"github.com/mnakhaev/simplebank/api"
@@ -14,6 +16,7 @@ import (
 	db "github.com/mnakhaev/simplebank/db/sqlc"
 	"github.com/mnakhaev/simplebank/grpc_api"
 	"github.com/mnakhaev/simplebank/pb"
+	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -85,8 +88,13 @@ func runGatewayServer(cfg config.Config, store db.Store) {
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux) // handle all endpoint by grpcMux
 
-	fs := http.FileServer(http.Dir("./doc/swagger"))
-	mux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal("cannot create statik fs:", err)
+	}
+
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+	mux.Handle("/swagger/", swaggerHandler)
 
 	listener, err := net.Listen("tcp", cfg.HTTPServerAddress)
 	if err != nil {

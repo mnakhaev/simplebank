@@ -38,3 +38,15 @@ If import in proto file is not successful, then:
 1) Copy repository which is imported. You will need it to copy some missing file(s).
 2) Create same structure for needed file in your local repository - `mkdir -p proto/protoc-gen-openapiv2/options`
 3) Copy all proto files from downloaded repo to local folder - `cp grpc-gateway/protoc-gen-openapiv2/options/*.proto proto/protoc-gen-openapiv2/options`
+
+[statik](https://github.com/rakyll/statik) is used to embed static files into Golang binary.
+Usage in code:
+```go
+statikFS, err := fs.New()
+if err != nil {
+    log.Fatal("cannot create statik fs:", err)
+}
+
+swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+mux.Handle("/swagger/", swaggerHandler)
+```
