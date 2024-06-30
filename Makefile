@@ -55,6 +55,9 @@ proto:
  	--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=simple_bank \
  	proto/*.proto
 
+evans:
+	evans --host localhost --port 9090 -r repl
+	# package pb -> service SimpleBank -> call CreateUser
 
 
-.PHONY: postgres createdb dropdb migrate-up migrate-down sqlc mock migrate-up-last migrate-down-last rundb db_docs db_schema  proto
+.PHONY: postgres createdb dropdb migrate-up migrate-down sqlc mock migrate-up-last migrate-down-last rundb db_docs db_schema proto evans

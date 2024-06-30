@@ -104,7 +104,7 @@ func (s *Server) loginUser(ctx *gin.Context) {
 	user, err := s.store.GetUser(ctx, req.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			ctx.JSON(http.StatusNotFound, errorResponse(ErrInvalidCredentials))
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -128,18 +128,14 @@ func (s *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	mtdt := s.extractMetadata(ctx)
-
 	session, err := s.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		UserAgent:    mtdt.UserAgent,
-		ClientIp:     mtdt.ClientIP,
-		// UserAgent:    ctx.Request.UserAgent(),
-		// ClientIp:     ctx.ClientIP(),
-		IsBlocked: false,
-		ExpiresAt: refreshPayload.ExpiredAt,
+		UserAgent:    ctx.Request.UserAgent(),
+		ClientIp:     ctx.ClientIP(),
+		IsBlocked:    false,
+		ExpiresAt:    refreshPayload.ExpiredAt,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
