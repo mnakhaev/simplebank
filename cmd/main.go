@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"net"
 	"net/http"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/mnakhaev/simplebank/doc/statik" // needed to embed static files into the binary
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -34,10 +38,23 @@ func main() {
 		log.Fatal("cannot connect to db:", err)
 	}
 
+	runDBMigration(cfg.MigrationURL, cfg.DBSource)
+
 	store := db.NewSQLStore(dbConn)
 	go runGatewayServer(cfg, store)
 	runGRPCServer(cfg, store)
 
+}
+
+func runDBMigration(migrationURL string, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatal("cannot create migration instance:", err)
+	}
+	if err = migration.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatal("failed to run migrate up:", err)
+	}
+	log.Println("db migrated successfully")
 }
 
 func runGRPCServer(cfg config.Config, store db.Store) {

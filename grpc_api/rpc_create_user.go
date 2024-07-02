@@ -8,11 +8,17 @@ import (
 	db "github.com/mnakhaev/simplebank/db/sqlc"
 	"github.com/mnakhaev/simplebank/pb"
 	"github.com/mnakhaev/simplebank/util"
+	"github.com/mnakhaev/simplebank/validator"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	violations := validateCreateUserRequest(req)
+	if violations != nil {
+		return nil, invalidArgumentError(violations)
+	}
 	hashedPassword, err := util.HashPassword(req.GetPassword())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err)
@@ -39,4 +45,22 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		User: convertUser(user),
 	}
 	return rsp, nil
+}
+
+// validateCreateUserRequest validates gRPC request. As for Gin implementation, validation was done out-of-the-box by using struct tags.
+// for gRPC, need to implement validation on your own.
+func validateCreateUserRequest(req *pb.CreateUserRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+	if err := validator.ValidateUsername(req.GetUsername()); err != nil {
+		violations = append(violations, fieldViolation("username", err))
+	}
+	if err := validator.ValidatePassword(req.GetPassword()); err != nil {
+		violations = append(violations, fieldViolation("password", err))
+	}
+	if err := validator.ValidateFullName(req.GetFullName()); err != nil {
+		violations = append(violations, fieldViolation("fullname", err))
+	}
+	if err := validator.ValidateEmail(req.GetEmail()); err != nil {
+		violations = append(violations, fieldViolation("email", err))
+	}
+	return violations
 }

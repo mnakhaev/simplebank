@@ -50,3 +50,4 @@ if err != nil {
 swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
 mux.Handle("/swagger/", swaggerHandler)
 ```
+Note: now it's outdated, use https://go.dev/doc/go1.16#library-embed instead.
