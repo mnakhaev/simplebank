@@ -51,3 +51,9 @@ swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
 mux.Handle("/swagger/", swaggerHandler)
 ```
 Note: now it's outdated, use https://go.dev/doc/go1.16#library-embed instead.
+
+
+How to add new gRPC API:
+1) Create new proto file in /proto directory
+2) Add import and RPC description in `service_simple_bank.proto`
+3) Run `make proto`

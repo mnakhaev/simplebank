@@ -3,6 +3,7 @@ syntax = "proto3";
 package pb;
 
 import "rpc_create_user.proto";
+import "rpc_update_user.proto";
 import "rpc_login_user.proto";
 import "google/api/annotations.proto"; // for gRPC gateway
 import "protoc-gen-openapiv2/options/annotations.proto"; // check readme on more info
@@ -11,7 +12,7 @@ option go_package = "github.com/mnakhaev/simplebank/pb";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "Simple Bank API";
-    version: "1.1";
+    version: "1.2";
     contact: {
       name: "gRPC-Gateway project";
       url: "https://github.com/mnakhaev";
@@ -22,7 +23,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 
 service SimpleBank {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
-    option (google.api.http) = { // for gRPC gateway
+    option (google.api.http) = {// for gRPC gateway
       post: "/v1/create_user"
       body: "*"
     };
@@ -32,13 +33,23 @@ service SimpleBank {
     };
   }
   rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {
-    option (google.api.http) = { // for gRPC gateway
+    option (google.api.http) = {// for gRPC gateway
       post: "/v1/login_user"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       description: "Use this API to login user and get access/refresh tokens";
       summary: "Login user";
+    };
+  }
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {// for gRPC gateway
+      patch: "/v1/update_user"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to update user";
+      summary: "Update user";
     };
   }
 }
