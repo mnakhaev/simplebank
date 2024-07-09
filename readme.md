@@ -57,3 +57,9 @@ How to add new gRPC API:
 1) Create new proto file in /proto directory
 2) Add import and RPC description in `service_simple_bank.proto`
 3) Run `make proto`
+
+How to implement logging of gRPC calls:
+0) Use gRPC interceptors - kind of middlewares.
+1) Add `grpc.UnaryInterceptor(grpc_api.GRPCLogger)`.
+2) Realize `UnaryInterceptor` method.
+3) Use "github.com/rs/zerolog/log" instead of default "log" package
