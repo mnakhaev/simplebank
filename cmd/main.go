@@ -126,7 +126,8 @@ func runGatewayServer(cfg config.Config, store db.Store) {
 	}
 
 	log.Info().Msgf("start HTTP gateway server at %s", listener.Addr().String())
-	err = http.Serve(listener, mux)
+	handler := grpc_api.HTTPLogger(mux) // add middleware for HTTP requests logging.
+	err = http.Serve(listener, handler)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot start HTTP gateway server")
 	}
