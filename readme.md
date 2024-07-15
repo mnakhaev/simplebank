@@ -63,3 +63,7 @@ How to implement logging of gRPC calls:
 1) Add `grpc.UnaryInterceptor(grpc_api.GRPCLogger)`.
 2) Realize `UnaryInterceptor` method.
 3) Use "github.com/rs/zerolog/log" instead of default "log" package
+
+
+Check connection for Redis docker CT:
+`docker exec -it redis redis-cli ping`

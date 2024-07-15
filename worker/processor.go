@@ -9,6 +9,11 @@ import (
 
 // processor will pick tasks from the Redis queue and process them.
 
+const (
+	QueueCritical = "critical"
+	QueueDefault  = "default"
+)
+
 type TaskProcessor interface {
 	// Start is needed to register the task processor to the server.
 	Start() error
@@ -22,7 +27,10 @@ type RedisTaskProcessor struct {
 func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) TaskProcessor {
 	server := asynq.NewServer(
 		redisOpt,
-		asynq.Config{},
+		asynq.Config{Queues: map[string]int{
+			QueueCritical: 10,
+			QueueDefault:  5,
+		}},
 	)
 	return &RedisTaskProcessor{server: server, store: store}
 }

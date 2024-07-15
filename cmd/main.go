@@ -11,7 +11,9 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/hibiken/asynq"
 	_ "github.com/mnakhaev/simplebank/doc/statik" // needed to embed static files into the binary
+	"github.com/mnakhaev/simplebank/worker"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -46,8 +48,16 @@ func main() {
 	runDBMigration(cfg.MigrationURL, cfg.DBSource)
 
 	store := db.NewSQLStore(dbConn)
-	go runGatewayServer(cfg, store)
-	runGRPCServer(cfg, store)
+
+	redisOpt := asynq.RedisClientOpt{
+		Addr: cfg.RedisAddress,
+	}
+
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+	go runTaskProcessor(redisOpt, store)
+
+	go runGatewayServer(cfg, store, taskDistributor)
+	runGRPCServer(cfg, store, taskDistributor)
 
 }
 
@@ -62,8 +72,17 @@ func runDBMigration(migrationURL string, dbSource string) {
 	log.Info().Msg("db migrated successfully")
 }
 
-func runGRPCServer(cfg config.Config, store db.Store) {
-	server, err := grpc_api.NewServer(cfg, store)
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+	log.Info().Msg("start task processor")
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to start task processor")
+	}
+}
+
+func runGRPCServer(cfg config.Config, store db.Store, td worker.TaskDistributor) {
+	server, err := grpc_api.NewServer(cfg, store, td)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
 	}
@@ -85,8 +104,8 @@ func runGRPCServer(cfg config.Config, store db.Store) {
 	}
 }
 
-func runGatewayServer(cfg config.Config, store db.Store) {
-	server, err := grpc_api.NewServer(cfg, store)
+func runGatewayServer(cfg config.Config, store db.Store, td worker.TaskDistributor) {
+	server, err := grpc_api.NewServer(cfg, store, td)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
 	}

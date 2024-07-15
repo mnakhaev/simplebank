@@ -3,12 +3,15 @@ package grpc_api
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	db "github.com/mnakhaev/simplebank/db/sqlc"
 	"github.com/mnakhaev/simplebank/pb"
 	"github.com/mnakhaev/simplebank/util"
 	"github.com/mnakhaev/simplebank/validator"
+	"github.com/mnakhaev/simplebank/worker"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,6 +44,19 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
+
+	// TODO: create user and send email in one DB transaction
+	taskPayload := &worker.PayloadSendVerifyEmail{Username: user.Username}
+	if err = s.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to distribute task to send verify email: %s", err)
+	}
+
+	opts := []asynq.Option{
+		asynq.MaxRetry(10),
+		asynq.ProcessIn(10 * time.Second), // 10s delay
+		asynq.Queue(worker.QueueCritical), // send to `critical` queue
+	}
+
 	rsp := &pb.CreateUserResponse{
 		User: convertUser(user),
 	}

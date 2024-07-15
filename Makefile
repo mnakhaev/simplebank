@@ -59,5 +59,7 @@ evans:
 	evans --host localhost --port 9090 -r repl
 	# package pb -> service SimpleBank -> call CreateUser
 
+redis:
+	docker run --name redis --network bank-network -p 6379:6379 -d redis:7.4-rc2-alpine
 
-.PHONY: postgres createdb dropdb migrate-up migrate-down sqlc mock migrate-up-last migrate-down-last rundb db_docs db_schema proto evans
+.PHONY: postgres createdb dropdb migrate-up migrate-down sqlc mock migrate-up-last migrate-down-last rundb db_docs db_schema proto evans redis
