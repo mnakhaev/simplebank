@@ -27,13 +27,24 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err)
 	}
 
-	// insert new user to DB
-	user, err := s.store.CreateUser(ctx, db.CreateUserParams{
-		Username:       req.GetUsername(),
-		HashedPassword: hashedPassword,
-		FullName:       req.GetFullName(),
-		Email:          req.GetEmail(),
-	})
+	arg := db.CreateUserTxParams{
+		CreateUserParams: db.CreateUserParams{
+			Username:       req.GetUsername(),
+			HashedPassword: hashedPassword,
+			FullName:       req.GetFullName(),
+			Email:          req.GetEmail(),
+		},
+		AfterCreate: func(user db.User) error {
+			taskPayload := &worker.PayloadSendVerifyEmail{Username: user.Username}
+			opts := []asynq.Option{
+				asynq.MaxRetry(10),
+				asynq.ProcessIn(10 * time.Second), // 10s delay
+				asynq.Queue(worker.QueueCritical), // send to `critical` queue
+			}
+			return s.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+		},
+	}
+	txResult, err := s.store.CreateUserTx(ctx, arg)
 	if err != nil {
 		pqErr := &pq.Error{}
 		if errors.As(err, &pqErr) {
@@ -45,25 +56,8 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
-	// TODO: create user and send email in one DB transaction
-	taskPayload := &worker.PayloadSendVerifyEmail{Username: user.Username}
-	if err = s.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to distribute task to send verify email: %s", err)
-	}
-
-	opts := []asynq.Option{
-		asynq.MaxRetry(10),
-		asynq.ProcessIn(10 * time.Second), // 10s delay
-		asynq.Queue(worker.QueueCritical), // send to `critical` queue
-	}
-
-	err = s.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to distribute task to send verify email: %s", err)
-	}
-
 	rsp := &pb.CreateUserResponse{
-		User: convertUser(user),
+		User: convertUser(txResult.User),
 	}
 	return rsp, nil
 }
