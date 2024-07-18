@@ -2,9 +2,7 @@ package worker
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/hibiken/asynq"
@@ -50,10 +48,11 @@ func (tp *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, ta
 
 	user, err := tp.store.GetUser(ctx, payload.Username)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// if user doesn't exist, then no reason to retry.
-			return fmt.Errorf("user doesn't exist: %w", asynq.SkipRetry)
-		}
+		// commented out to allow retries for failed tasks
+		// if errors.Is(err, sql.ErrNoRows) {
+		// 	// if user doesn't exist, then no reason to retry.
+		// 	return fmt.Errorf("user doesn't exist: %w", asynq.SkipRetry)
+		// }
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 

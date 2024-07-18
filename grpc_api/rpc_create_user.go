@@ -38,7 +38,8 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 			taskPayload := &worker.PayloadSendVerifyEmail{Username: user.Username}
 			opts := []asynq.Option{
 				asynq.MaxRetry(10),
-				asynq.ProcessIn(10 * time.Second), // 10s delay
+				asynq.ProcessIn(10 * time.Second), // 10s delay is needed because in case of DB highload, transaction can pass with some delay
+				// in such case, other tasks will be failed because user won't be found in database
 				asynq.Queue(worker.QueueCritical), // send to `critical` queue
 			}
 			return s.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
