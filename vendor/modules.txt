@@ -157,6 +157,9 @@ github.com/hibiken/asynq/internal/log
 github.com/hibiken/asynq/internal/proto
 github.com/hibiken/asynq/internal/rdb
 github.com/hibiken/asynq/internal/timeutil
+# github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
+## explicit
+github.com/jordan-wright/email
 # github.com/json-iterator/go v1.1.12
 ## explicit; go 1.12
 github.com/json-iterator/go
