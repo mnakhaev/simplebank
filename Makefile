@@ -42,7 +42,7 @@ server:
 	go run cmd/main.go
 
 test:
-	go test -v -cover ./...
+	go test -v -cover -short ./...
 
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/mnakhaev/simplebank/db/sqlc Store
