@@ -13,6 +13,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/hibiken/asynq"
 	_ "github.com/mnakhaev/simplebank/doc/statik" // needed to embed static files into the binary
+	"github.com/mnakhaev/simplebank/mail"
 	"github.com/mnakhaev/simplebank/worker"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -54,7 +55,7 @@ func main() {
 	}
 
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
-	go runTaskProcessor(redisOpt, store)
+	go runTaskProcessor(cfg, redisOpt, store)
 
 	go runGatewayServer(cfg, store, taskDistributor)
 	runGRPCServer(cfg, store, taskDistributor)
@@ -72,8 +73,9 @@ func runDBMigration(migrationURL string, dbSource string) {
 	log.Info().Msg("db migrated successfully")
 }
 
-func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+func runTaskProcessor(config config.Config, redisOpt asynq.RedisClientOpt, store db.Store) {
+	sender := mail.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, sender)
 	log.Info().Msg("start task processor")
 	err := taskProcessor.Start()
 	if err != nil {
